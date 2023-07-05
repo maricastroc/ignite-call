@@ -20,6 +20,6 @@ export const FormAnnotation = styled('div', {
   },
 
   '.error': {
-    color: '#F74361',
+    color: '#f75a68',
   },
 })

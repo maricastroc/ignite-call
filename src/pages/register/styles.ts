@@ -4,18 +4,6 @@ export const Container = styled('main', {
   maxWidth: 572,
   margin: '$20 auto $4',
   padding: '0 $4',
-
-  '@media(max-width: 680px)': {
-    maxWidth: 450,
-  },
-
-  '@media(max-width: 480px)': {
-    maxWidth: 350,
-  },
-
-  '@media(max-width: 350px)': {
-    maxWidth: 320,
-  },
 })
 
 export const Header = styled('div', {

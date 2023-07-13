@@ -1,25 +1,27 @@
-import { Button, Text, TextArea, TextInput } from '@ignite-ui/react'
-import { CalendarBlank, Clock } from 'phosphor-react'
-import { ConfirmForm, FormActions, FormError, FormHeader } from './styles'
-import { z } from 'zod'
-import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Button, Text, TextArea, TextInput } from '@ignite-ui/react'
+import dayjs from 'dayjs'
+import { useRouter } from 'next/router'
+import { CalendarBlank, Clock } from 'phosphor-react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { api } from '../../../../../lib/axios'
+import { ConfirmForm, FormActions, FormError, FormHeader } from './styles'
 
 const confirmFormSchema = z.object({
-  name: z
-    .string()
-    .min(3, { message: 'Name must have at least three caracters' }),
-  email: z.string().email({ message: 'Digit a valid e-mail' }),
+  name: z.string().min(3, { message: 'O nome precisa no mínimo 3 caracteres' }),
+  email: z.string().email({ message: 'Digite um e-mail válido' }),
   observations: z.string().nullable(),
 })
-
 type ConfirmFormData = z.infer<typeof confirmFormSchema>
-
-export function ConfirmStep() {
-  function handleConfirmScheduling(data: ConfirmFormData) {
-    console.log(data)
-  }
-
+interface ConfirmStepProps {
+  schedulingDate: Date
+  onCancelConfirmation: () => void
+}
+export function ConfirmStep({
+  schedulingDate,
+  onCancelConfirmation,
+}: ConfirmStepProps) {
   const {
     register,
     handleSubmit,
@@ -28,27 +30,43 @@ export function ConfirmStep() {
     resolver: zodResolver(confirmFormSchema),
   })
 
+  const router = useRouter()
+  const username = String(router.query.username)
+
+  async function handleConfirmScheduling(data: ConfirmFormData) {
+    const { name, email, observations } = data
+
+    await api.post(`/users/${username}/schedule`, {
+      name,
+      email,
+      observations,
+      date: schedulingDate,
+    })
+
+    onCancelConfirmation()
+  }
+
+  const describedDate = dayjs(schedulingDate).format('MMMM DD, YYYY')
+  const describedTime = dayjs(schedulingDate).format('HH:mm[h]')
   return (
     <ConfirmForm as="form" onSubmit={handleSubmit(handleConfirmScheduling)}>
       <FormHeader>
         <Text>
           <CalendarBlank />
-          September 22th, 2022
+          {describedDate}
         </Text>
         <Text>
           <Clock />
-          06:00PM
+          {describedTime}
         </Text>
       </FormHeader>
-
       <label>
-        <Text size="sm">Fullname:</Text>
-        <TextInput placeholder="Seu nome" {...register('name')} />
+        <Text size="sm">Fullname</Text>
+        <TextInput placeholder="Your name" {...register('name')} />
         {errors.name && <FormError size="sm">{errors.name.message}</FormError>}
       </label>
-
       <label>
-        <Text size="sm">E-mail Address:</Text>
+        <Text size="sm">E-mail address</Text>
         <TextInput
           type="email"
           placeholder="johndoe@example.com"
@@ -58,19 +76,17 @@ export function ConfirmStep() {
           <FormError size="sm">{errors.email.message}</FormError>
         )}
       </label>
-
       <label>
-        <Text size="sm" {...register('observations')}>
-          Observations:
-        </Text>
-        <TextArea />
+        <Text size="sm">Observations</Text>
+        <TextArea {...register('observations')} />
       </label>
-
       <FormActions>
-        <Button type="button" variant="tertiary" disabled={isSubmitting}>
+        <Button type="button" variant="tertiary" onClick={onCancelConfirmation}>
           Cancel
         </Button>
-        <Button type="submit">Confirm</Button>
+        <Button type="submit" disabled={isSubmitting}>
+          Confirm
+        </Button>
       </FormActions>
     </ConfirmForm>
   )
